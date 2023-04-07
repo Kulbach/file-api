@@ -2,19 +2,17 @@ package com.hrblizz.fileapi.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.core.io.InputStreamResource;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @Data
 @Builder
-public class FileMetaDTO {
+public class FileData {
 
-    private String token;
-    private String fileName;
-    private Long size;
+    private InputStreamResource content;
     private String contentType;
+    private String fileName;
     private LocalDateTime createTime;
-    private String source;
-    private Map<String, Object> meta;
+    private Long size;
 }

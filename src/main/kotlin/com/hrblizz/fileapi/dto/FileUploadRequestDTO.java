@@ -1,7 +1,7 @@
 package com.hrblizz.fileapi.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
@@ -19,8 +19,8 @@ public class FileUploadRequestDTO {
     private String meta;
     @NotBlank
     private String source;
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime expireTime;
     @NotNull
     private MultipartFile content;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDateTime expireTime;
 }

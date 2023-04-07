@@ -7,22 +7,19 @@ import com.hrblizz.fileapi.data.repository.FileEntityRepository;
 import com.hrblizz.fileapi.dto.*;
 import com.hrblizz.fileapi.mapper.FileEntityMapper;
 import com.hrblizz.fileapi.service.FileService;
-import com.hrblizz.fileapi.service.impl.exception.ProcessException;
 import com.mongodb.MongoException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
+import java.io.*;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -30,24 +27,16 @@ import java.util.stream.StreamSupport;
 @Service
 @RequiredArgsConstructor
 public class FileServiceImpl implements FileService {
-
-    @Value("${file.upload.dir}")
-    private String uploadFileDir;
-
     private final FileEntityRepository fileEntityRepository;
+    private final Path uploadPath;
 
     @Override
     public FileUploadResponseDTO save(FileUploadRequestDTO dto) {
-        Path path = Paths.get(uploadFileDir);
-        File file = new File(path + "/" + dto.getName());
+        File file = getFile(dto.getName());
 
-        try {
-            saveFileLocally(file, dto.getContent());
-            return new FileUploadResponseDTO(saveAndGetToken(dto));
-        } catch (Exception ex) {
-            deleteFile(file);
-            throw new InternalException(ex.getLocalizedMessage());
-        }
+        saveFileLocally(file, dto.getContent());
+
+        return new FileUploadResponseDTO(saveAndGetToken(dto));
     }
 
     @Override
@@ -61,22 +50,28 @@ public class FileServiceImpl implements FileService {
         return new FileMetaResponseDTO(metasMap);
     }
 
+    @Override
+    public FileData downloadFile(String token) {
+        FileEntity fileMeta = findMeta(token)
+                .orElseThrow(() -> new BadRequestException("There is no file with token " + token));
+        File file = getFile(fileMeta.getFileName());
+        InputStreamResource resource = getFileContent(file);
+
+        return FileEntityMapper.MAPPER.mapToFileData(fileMeta, resource);
+    }
+
+    @Override
+    public void deleteFile(String token) {
+        FileEntity fileMeta = findMeta(token)
+                .orElseThrow(() -> new BadRequestException("There is no file with token " + token));
+        File file = getFile(fileMeta.getFileName());
+        deleteFileLocally(file);
+        deleteFileFromDB(token);
+    }
+
     private String saveAndGetToken(FileUploadRequestDTO dto) {
         FileEntity entity = saveFileToDB(dto);
         return entity.getToken();
-    }
-
-    private void saveFileLocally(File file, MultipartFile content) {
-        if (file.exists()) {
-            throw new BadRequestException("File already exists");
-        }
-
-        try {
-            OutputStream outputStream = Files.newOutputStream(file.toPath());
-            outputStream.write(content.getBytes());
-        } catch (IOException ex) {
-            throw new ProcessException("Failed to save file");
-        }
     }
 
     private FileEntity saveFileToDB(FileUploadRequestDTO dto) {
@@ -86,13 +81,46 @@ public class FileServiceImpl implements FileService {
             fileEntityRepository.save(fileEntity);
             return fileEntity;
         } catch (MongoException ex) {
-            throw new ProcessException("Failed to store file in mongodb");
+            throw new InternalException("Failed to store file in mongodb " + fileEntity.toString());
         }
     }
 
-    private void deleteFile(File file) {
+    private void deleteFileFromDB(String token) {
+        try {
+            fileEntityRepository.deleteById(token);
+        } catch (MongoException ex) {
+            throw new InternalException("Failed to delete meta from mongodb for token " + token);
+        }
+    }
+
+    private void saveFileLocally(File file, MultipartFile content) {
         if (file.exists()) {
-            file.delete();
+            throw new BadRequestException("File already exists on disk " + file.getName());
+        }
+
+        try {
+            OutputStream outputStream = Files.newOutputStream(file.toPath());
+            outputStream.write(content.getBytes());
+        } catch (IOException ex) {
+            throw new InternalException("Failed to save file on disk" + file.getName());
+        }
+    }
+
+    private File getFile(String fileName) {
+        return new File(uploadPath + "/" + fileName);
+    }
+
+    private InputStreamResource getFileContent(File file) {
+        try {
+            return new InputStreamResource(new FileInputStream(file));
+        } catch (FileNotFoundException ex) {
+            throw new BadRequestException("File does not exist " + file.getName());
+        }
+    }
+
+    private void deleteFileLocally(File file) {
+        if (!file.delete()) {
+            throw new InternalException("Failed to delete file with name " + file.getName());
         }
     }
 
@@ -100,7 +128,15 @@ public class FileServiceImpl implements FileService {
         try {
             return fileEntityRepository.findAllById(tokens);
         } catch (MongoException ex) {
-            throw new InternalException("Failed to get metas by list of tokens");
+            throw new InternalException("Failed to get metas by list of tokens " + tokens);
+        }
+    }
+
+    private Optional<FileEntity> findMeta(String token) {
+        try {
+            return fileEntityRepository.findById(token);
+        } catch (MongoException ex) {
+            throw new InternalException("Failed to get meta by token " + token);
         }
     }
 }

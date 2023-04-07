@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hrblizz.fileapi.controller.exception.InternalException;
 import com.hrblizz.fileapi.data.entities.FileEntity;
+import com.hrblizz.fileapi.dto.FileData;
 import com.hrblizz.fileapi.dto.FileMetaDTO;
 import com.hrblizz.fileapi.dto.FileUploadRequestDTO;
 import org.mapstruct.Builder;
@@ -12,6 +13,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
@@ -51,9 +53,16 @@ public interface FileEntityMapper {
     @Mapping(target = "meta", source = "meta")
     FileMetaDTO mapToMeta(FileEntity fileEntity);
 
+    @Mapping(target = "content", source = "resource")
+    @Mapping(target = "contentType", source = "fileEntity.contentType")
+    @Mapping(target = "fileName", source = "fileEntity.fileName")
+    @Mapping(target = "size", source = "fileEntity.size")
+    @Mapping(target = "createTime", source = "fileEntity.createTime")
+    FileData mapToFileData(FileEntity fileEntity, InputStreamResource resource);
+
     @Named("generateToken")
     default String generateToken(String originalFileName) {
-        return originalFileName + "/" + UUID.randomUUID();
+        return originalFileName + "_" + UUID.randomUUID();
     }
 
     @Named("getSize")

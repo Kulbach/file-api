@@ -1,13 +1,14 @@
 package com.hrblizz.fileapi.service;
 
-import com.hrblizz.fileapi.dto.FileMetaRequestDTO;
-import com.hrblizz.fileapi.dto.FileMetaResponseDTO;
-import com.hrblizz.fileapi.dto.FileUploadRequestDTO;
-import com.hrblizz.fileapi.dto.FileUploadResponseDTO;
+import com.hrblizz.fileapi.dto.*;
 
 public interface FileService {
 
     FileUploadResponseDTO save(FileUploadRequestDTO dto);
 
     FileMetaResponseDTO getMetas(FileMetaRequestDTO dto);
+
+    FileData downloadFile(String token);
+
+    void deleteFile(String token);
 }

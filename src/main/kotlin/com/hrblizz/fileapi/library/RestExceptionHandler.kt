@@ -209,12 +209,12 @@ class RestExceptionHandler(
 
     @ExceptionHandler(Exception::class)
     fun handleAll(ex: Exception, request: WebRequest): ResponseEntity<Any> {
-        this.log.error(ExceptionLogItem("Unhandled exception: ${ex.localizedMessage}", ex))
+        this.log.error(ExceptionLogItem("Exception occurred : ${ex.localizedMessage}", ex))
 
-        val errorStatus = HttpStatus.INTERNAL_SERVER_ERROR
+        val errorStatus = HttpStatus.SERVICE_UNAVAILABLE
         val apiError = com.hrblizz.fileapi.rest.ResponseEntity<Any>(
             null,
-            listOf(ErrorMessage("Unknown error occurred")),
+            listOf(ErrorMessage(errorStatus.reasonPhrase)),
             errorStatus.value()
         )
         return ResponseEntity(apiError, HttpHeaders(), errorStatus)
