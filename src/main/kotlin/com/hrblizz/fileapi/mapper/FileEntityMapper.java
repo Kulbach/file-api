@@ -5,7 +5,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hrblizz.fileapi.controller.exception.InternalException;
 import com.hrblizz.fileapi.data.entities.FileEntity;
-import com.hrblizz.fileapi.dto.FileUploadDTO;
+import com.hrblizz.fileapi.dto.FileMetaDTO;
+import com.hrblizz.fileapi.dto.FileUploadRequestDTO;
 import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -29,7 +30,8 @@ public interface FileEntityMapper {
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "meta", source = "meta", qualifiedByName = "parseMeta")
     @Mapping(target = "token", source = "name", qualifiedByName = "generateToken")
-    FileEntity mapToEntity(FileUploadDTO dto);
+    @Mapping(target = "contentType", source = "contentType")
+    FileEntity mapToEntity(FileUploadRequestDTO dto);
 
     @Named("parseMeta")
     default Map<String, Object> parseMeta(String meta) {
@@ -39,6 +41,15 @@ public interface FileEntityMapper {
             throw new InternalException("Failed to process meta");
         }
     }
+
+    @Mapping(target = "token", source = "token")
+    @Mapping(target = "fileName", source = "fileName")
+    @Mapping(target = "source", source = "source")
+    @Mapping(target = "size", source = "size")
+    @Mapping(target = "contentType", source = "contentType")
+    @Mapping(target = "createTime", source = "createTime")
+    @Mapping(target = "meta", source = "meta")
+    FileMetaDTO mapToMeta(FileEntity fileEntity);
 
     @Named("generateToken")
     default String generateToken(String originalFileName) {

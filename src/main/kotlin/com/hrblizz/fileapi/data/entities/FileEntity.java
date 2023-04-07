@@ -21,6 +21,7 @@ public class FileEntity {
     private String fileName;
     private Long size;
     private String source;
+    private String contentType;
     private LocalDateTime expireTime;
     private Map<String, Object> meta;
     @CreatedDate

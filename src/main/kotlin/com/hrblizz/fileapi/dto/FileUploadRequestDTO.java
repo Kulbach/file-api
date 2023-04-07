@@ -9,7 +9,7 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Data
-public class FileUploadDTO {
+public class FileUploadRequestDTO {
 
     @NotBlank
     private String name;
