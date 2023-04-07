@@ -1,16 +1,191 @@
 openapi: 3.0.0
 info:
-  version: '1.0.0'
   title: File API
+  description: API for files managing
+  version: 1.0.0
 
 paths:
-  /status:
-    get:
-      summary: Status
-      description: Get Status.
+  /files:
+    post:
+      summary: Upload a file
+      operationId: uploadFile
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUploadRequestDTO'
+      responses:
+        '201':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileUploadResponseDTO'
+  /files/metas:
+    post:
+      summary: Get metadatas for files by tokens
+      operationId: getMetas
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileMetaRequestDTO'
       responses:
         '200':
-          description: It's a response.
-
-security:
-  - basicAuth: []
+          description: Files metadatas retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileMetaResponseDTO'
+  /file/{token}:
+    get:
+      summary: Download a file by token
+      operationId: downloadFile
+      security:
+        - basicAuth: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The token of the file to download
+      responses:
+        '200':
+          description: File downloaded successfully
+          headers:
+            X-Filename:
+              description: The name of the downloaded file
+              schema:
+                type: string
+            X-Filesize:
+              description: The size of the downloaded file
+              schema:
+                type: integer
+            X-CreateTime:
+              description: The creation time of the downloaded file
+              schema:
+                type: string
+            Content-Type:
+              description: The media-type of the file
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+    delete:
+      summary: Delete a file
+      operationId: deleteFile
+      parameters:
+        - in: path
+          name: token
+          schema:
+            type: string
+          required: true
+          description: The token of the file to delete
+      responses:
+        '200':
+          description: File deleted successfully
+components:
+  schemas:
+    FileUploadRequestDTO:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the file
+        contentType:
+          type: string
+          description: The content type of the file
+        meta:
+          type: string
+          description: Additional metadata about the file
+        source:
+          type: string
+          description: The source of the file
+        expireTime:
+          type: string
+          format: date-time
+          description: The date and time when the file will expire
+        content:
+          type: string
+          format: binary
+          description: The content of the file
+      required:
+        - name
+        - contentType
+        - meta
+        - source
+        - content
+    FileUploadResponseDTO:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Unique token for the uploaded file
+      required:
+        - token
+    FileMetaRequestDTO:
+      type: object
+      properties:
+        tokens:
+          type: array
+          items:
+            type: string
+          description: List of file tokens to retrieve metadata for
+      required:
+        - tokens
+    FileMetaResponseDTO:
+      type: object
+      properties:
+        files:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/FileMetaDTO'
+      required:
+        - files
+    FileMetaDTO:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Unique token for the file
+        fileName:
+          type: string
+          description: The name of the file
+        size:
+          type: integer
+          description: The size of the file in bytes
+        contentType:
+          type: string
+          description: The content type of the file
+        createTime:
+          type: string
+          format: date-time
+          description: The date and time when the file was uploaded
+        source:
+          type: string
+          description: The source of the file
+        meta:
+          type: object
+          additionalProperties: true
+          description: Additional metadata about the file
+      required:
+        - token
+        - fileName
+        - size
+        - contentType
+        - createTime
+        - source
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
