@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,13 +24,13 @@ public class FileController {
     }
 
     @PostMapping(value = "/files/metas", produces = "application/json")
-    public ResponseEntity<FileMetaResponseDTO> getMetas(@RequestBody @NotBlank FileMetaRequestDTO dto) {
+    public ResponseEntity<FileMetaResponseDTO> getMetas(@RequestBody FileMetaRequestDTO dto) {
         FileMetaResponseDTO response = fileService.getMetas(dto);
         return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("/file/{token}")
-    public ResponseEntity<InputStreamResource> downloadFile(@PathVariable @NotBlank String token) {
+    public ResponseEntity<InputStreamResource> downloadFile(@PathVariable String token) {
         FileData fileData = fileService.downloadFile(token);
         return ResponseEntity.ok()
                 .header("X-Filename", fileData.getFileName())
