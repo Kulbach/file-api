@@ -80,16 +80,16 @@ public class FileServiceImpl implements FileService {
         try {
             fileEntityRepository.save(fileEntity);
             return fileEntity;
-        } catch (MongoException ex) {
-            throw new InternalException("Failed to store file in mongodb " + fileEntity.toString());
+        } catch (MongoException e) {
+            throw new InternalException("Failed to store file in mongodb " + fileEntity.toString(), e);
         }
     }
 
     private void deleteFileFromDB(String token) {
         try {
             fileEntityRepository.deleteById(token);
-        } catch (MongoException ex) {
-            throw new InternalException("Failed to delete meta from mongodb for token " + token);
+        } catch (MongoException e) {
+            throw new InternalException("Failed to delete meta from mongodb for token " + token, e);
         }
     }
 
@@ -101,8 +101,8 @@ public class FileServiceImpl implements FileService {
         try {
             OutputStream outputStream = Files.newOutputStream(file.toPath());
             outputStream.write(content.getBytes());
-        } catch (IOException ex) {
-            throw new InternalException("Failed to save file on disk " + file.getName());
+        } catch (IOException e) {
+            throw new InternalException("Failed to save file on disk " + file.getName(), e);
         }
     }
 
@@ -113,8 +113,8 @@ public class FileServiceImpl implements FileService {
     private InputStreamResource getFileContent(File file) {
         try {
             return new InputStreamResource(new FileInputStream(file));
-        } catch (FileNotFoundException ex) {
-            throw new InternalException("File does not exist " + file.getName());
+        } catch (FileNotFoundException e) {
+            throw new InternalException("File does not exist " + file.getName(), e);
         }
     }
 
@@ -127,16 +127,16 @@ public class FileServiceImpl implements FileService {
     private Iterable<FileEntity> findMetas(List<String> tokens) {
         try {
             return fileEntityRepository.findAllById(tokens);
-        } catch (MongoException ex) {
-            throw new InternalException("Failed to get metas by list of tokens " + tokens);
+        } catch (MongoException e) {
+            throw new InternalException("Failed to get metas by list of tokens " + tokens, e);
         }
     }
 
     private Optional<FileEntity> findMeta(String token) {
         try {
             return fileEntityRepository.findById(token);
-        } catch (MongoException ex) {
-            throw new InternalException("Failed to get meta by token " + token);
+        } catch (MongoException e) {
+            throw new InternalException("Failed to get meta by token " + token, e);
         }
     }
 }
