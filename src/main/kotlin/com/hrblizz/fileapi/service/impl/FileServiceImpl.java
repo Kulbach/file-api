@@ -102,7 +102,7 @@ public class FileServiceImpl implements FileService {
             OutputStream outputStream = Files.newOutputStream(file.toPath());
             outputStream.write(content.getBytes());
         } catch (IOException ex) {
-            throw new InternalException("Failed to save file on disk" + file.getName());
+            throw new InternalException("Failed to save file on disk " + file.getName());
         }
     }
 
@@ -114,7 +114,7 @@ public class FileServiceImpl implements FileService {
         try {
             return new InputStreamResource(new FileInputStream(file));
         } catch (FileNotFoundException ex) {
-            throw new BadRequestException("File does not exist " + file.getName());
+            throw new InternalException("File does not exist " + file.getName());
         }
     }
 
