@@ -9,7 +9,6 @@ import java.nio.file.Paths;
 
 @Configuration
 public class FileConfiguration {
-
     @Value("${file.upload.dir}")
     private String uploadFileDir;
 
