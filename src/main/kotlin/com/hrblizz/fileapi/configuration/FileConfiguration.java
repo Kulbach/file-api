@@ -12,6 +12,7 @@ public class FileConfiguration {
 
     @Value("${file.upload.dir}")
     private String uploadFileDir;
+
     @Bean
     public Path uploadPath() {
         return Paths.get(uploadFileDir);
