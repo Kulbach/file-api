@@ -1,6 +1,7 @@
 package com.hrblizz.fileapi.library
 
 import com.hrblizz.fileapi.controller.exception.BadRequestException
+import com.hrblizz.fileapi.controller.exception.InternalException
 import com.hrblizz.fileapi.library.log.ExceptionLogItem
 import com.hrblizz.fileapi.library.log.Logger
 import com.hrblizz.fileapi.rest.ErrorMessage
@@ -180,6 +181,8 @@ class RestExceptionHandler(
 
     @ExceptionHandler(BadRequestException::class)
     fun handleBadRequest(ex: BadRequestException): ResponseEntity<Any> {
+        this.log.error(ExceptionLogItem("Bad request exception: ${ex.localizedMessage}", ex))
+
         var status: HttpStatus? = getResponseStatus(ex.javaClass)
         if (status == null) {
             status = HttpStatus.BAD_REQUEST
@@ -206,12 +209,25 @@ class RestExceptionHandler(
 
     @ExceptionHandler(Exception::class)
     fun handleAll(ex: Exception, request: WebRequest): ResponseEntity<Any> {
-        this.log.error(ExceptionLogItem("Unhandled exception: ${ex.localizedMessage}", ex))
+        this.log.error(ExceptionLogItem("Exception occurred : ${ex.localizedMessage}", ex))
 
-        val errorStatus = HttpStatus.INTERNAL_SERVER_ERROR
+        val errorStatus = HttpStatus.SERVICE_UNAVAILABLE
         val apiError = com.hrblizz.fileapi.rest.ResponseEntity<Any>(
             null,
-            listOf(ErrorMessage("Unknown error occurred")),
+            listOf(ErrorMessage(errorStatus.reasonPhrase)),
+            errorStatus.value()
+        )
+        return ResponseEntity(apiError, HttpHeaders(), errorStatus)
+    }
+
+    @ExceptionHandler(InternalException::class)
+    fun handleAll(ex: InternalException, request: WebRequest): ResponseEntity<Any> {
+        this.log.error(ExceptionLogItem("Internal exception occurred : ${ex.localizedMessage}", ex))
+
+        val errorStatus = HttpStatus.SERVICE_UNAVAILABLE
+        val apiError = com.hrblizz.fileapi.rest.ResponseEntity<Any>(
+            null,
+            listOf(ErrorMessage(errorStatus.reasonPhrase)),
             errorStatus.value()
         )
         return ResponseEntity(apiError, HttpHeaders(), errorStatus)
